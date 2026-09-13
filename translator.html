@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Easy Translator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif;
+    background: #f5f7fb;
+    color: #1c2333;
+    min-height: 100vh;
+    padding: 28px 16px 60px;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .mark {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2f5eff, #7b3dff);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 16px;
+  }
+  .brand .name { font-size: 20px; font-weight: 600; }
+  .brand .name span { color: #2f5eff; }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: #eceff6;
+    padding: 4px;
+    border-radius: 10px;
+  }
+  .tab {
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    color: #5c6479;
+    cursor: pointer;
+  }
+  .tab.active { background: #fff; color: #1c2333; box-shadow: 0 1px 3px rgba(20,20,40,0.08); }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(20,20,40,0.06), 0 8px 24px rgba(20,20,40,0.04);
+    overflow: hidden;
+  }
+
+  .lang-bar {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eceff6;
+  }
+  .lang-select-wrap { flex: 1; position: relative; }
+  select.lang-select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 16px 18px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1c2333;
+    appearance: none;
+    cursor: pointer;
+  }
+  select.lang-select:focus { outline: none; background: #f5f7fb; }
+  .lang-select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 16px; top: 50%;
+    width: 8px; height: 8px;
+    border-right: 2px solid #8891a5;
+    border-bottom: 2px solid #8891a5;
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+  .swap-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid #eceff6;
+    background: #fff;
+    color: #2f5eff;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0 8px;
+    transition: transform 0.2s, background 0.15s;
+  }
+  .swap-btn:hover { background: #eef1ff; }
+  .swap-btn.spin { transform: rotate(180deg); }
+
+  .panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .pane { position: relative; }
+  .pane:first-child { border-right: 1px solid #eceff6; }
+
+  textarea {
+    width: 100%;
+    height: 220px;
+    border: none;
+    resize: none;
+    padding: 20px 20px 46px;
+    font-size: 18px;
+    line-height: 1.6;
+    font-family: inherit;
+    color: #1c2333;
+  }
+  textarea:focus { outline: none; }
+  textarea::placeholder { color: #a7aec1; }
+  #outputText { background: #fafbfd; color: #1c2333; }
+
+  .pane-tools {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid #eceff6;
+    background: inherit;
+  }
+  .char-count { font-size: 12px; color: #a7aec1; }
+  .icon-btns { display: flex; gap: 4px; }
+  .icon-btn {
+    width: 30px; height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: #6b7288;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: #eceff6; color: #1c2333; }
+  .icon-btn.copied { color: #1a9c5e; }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid #eceff6;
+    background: #fafbfd;
+  }
+  .status { font-size: 13px; color: #8891a5; }
+  .btn-group { display: flex; gap: 10px; }
+  button.primary {
+    padding: 10px 22px;
+    background: linear-gradient(135deg, #2f5eff, #5b4bff);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button.primary:disabled { opacity: 0.6; cursor: default; }
+  button.ghost {
+    padding: 10px 18px;
+    background: transparent;
+    border: 1px solid #dfe3ec;
+    color: #5c6479;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .phrases {
+    margin-top: 28px;
+  }
+  .phrases h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #1c2333;
+  }
+  .phrase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .phrase-card {
+    background: #fff;
+    border: 1px solid #eceff6;
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .phrase-card:hover { border-color: #2f5eff; }
+  .phrase-card .en { font-size: 13px; color: #8891a5; }
+  .phrase-card .native { font-size: 15px; font-weight: 500; margin-top: 3px; }
+
+  footer {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 12px;
+    color: #a7aec1;
+  }
+
+  @media (max-width: 640px) {
+    .panes { grid-template-columns: 1fr; }
+    .pane:first-child { border-right: none; border-bottom: 1px solid #eceff6; }
+    textarea { height: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark">अआ</div>
+      <div class="name">Easy<span>Translate</span></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active">Text</button>
+      <button class="tab" id="voiceTab">Voice</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="lang-bar">
+      <div class="lang-select-wrap">
+        <select class="lang-select" id="srcLang"></select>
+      </div>
+      <button class="swap-btn" id="swapBtn" title="Bhasha badlo">⇄</button>
+      <div class="lang-select-wrap">
+        <select class="lang-select" id="tgtLang"></select>
+      </div>
+    </div>
+
+    <div class="panes">
+      <div class="pane">
+        <textarea id="inputText" placeholder="Yahan type karo ya paste karo..." maxlength="40000"></textarea>
+        <div class="pane-tools">
+          <span class="char-count"><span id="charCount">0</span>/40000</span>
+          <div class="icon-btns">
+            <button class="icon-btn" id="micBtn" title="Bolke type karo">🎤</button>
+            <button class="icon-btn" id="speakInBtn" title="Sunno">🔊</button>
+            <button class="icon-btn" id="clearBtn" title="Clear">✕</button>
+          </div>
+        </div>
+      </div>
+      <div class="pane">
+        <textarea id="outputText" placeholder="Translation yahan aayega..." readonly></textarea>
+        <div class="pane-tools">
+          <span class="char-count" id="outCount"></span>
+          <div class="icon-btns">
+            <button class="icon-btn" id="speakOutBtn" title="Sunno">🔊</button>
+            <button class="icon-btn" id="copyBtn" title="Copy karo">⧉</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <span class="status" id="status">&nbsp;</span>
+      <div class="btn-group">
+        <button class="ghost" id="resetBtn">Reset</button>
+        <button class="primary" id="translateBtn">Translate karo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="phrases">
+    <h2>Common phrases</h2>
+    <div class="phrase-grid" id="phraseGrid"></div>
+  </div>
+
+  <footer>This Translator Developed By Sumit Adhav.</footer>
+</div>
+
+<script>
+const LANGS = [
+  ['en','English'], ['hi','हिंदी (Hindi)'], ['mr','मराठी (Marathi)'], ['ta','தமிழ் (Tamil)'],
+  ['te','తెలుగు (Telugu)'], ['kn','ಕನ್ನಡ (Kannada)'], ['bn','বাংলা (Bengali)'], ['gu','ગુજરાતી (Gujarati)'],
+  ['pa','ਪੰਜਾਬੀ (Punjabi)'], ['ur','اردو (Urdu)'], ['ml','മലയാളം (Malayalam)'], ['es','Spanish'],
+  ['fr','French'], ['de','German'], ['ja','Japanese'], ['zh-CN','Chinese'], ['ar','Arabic'], ['ru','Russian']
+];
+
+const srcLang = document.getElementById('srcLang');
+const tgtLang = document.getElementById('tgtLang');
+const inputText = document.getElementById('inputText');
+const outputText = document.getElementById('outputText');
+const charCount = document.getElementById('charCount');
+const outCount = document.getElementById('outCount');
+const translateBtn = document.getElementById('translateBtn');
+const resetBtn = document.getElementById('resetBtn');
+const clearBtn = document.getElementById('clearBtn');
+const copyBtn = document.getElementById('copyBtn');
+const swapBtn = document.getElementById('swapBtn');
+const speakInBtn = document.getElementById('speakInBtn');
+const speakOutBtn = document.getElementById('speakOutBtn');
+const micBtn = document.getElementById('micBtn');
+const statusEl = document.getElementById('status');
+const phraseGrid = document.getElementById('phraseGrid');
+
+LANGS.forEach(([code, name]) => {
+  const o1 = document.createElement('option'); o1.value = code; o1.textContent = name;
+  const o2 = document.createElement('option'); o2.value = code; o2.textContent = name;
+  srcLang.appendChild(o1); tgtLang.appendChild(o2);
+});
+srcLang.value = 'en';
+tgtLang.value = 'hi';
+
+inputText.addEventListener('input', () => {
+  charCount.textContent = inputText.value.length;
+});
+
+async function translate() {
+  const text = inputText.value.trim();
+  if (!text) { statusEl.textContent = 'Kuch text likho pehle'; return; }
+  const from = srcLang.value, to = tgtLang.value;
+  if (from === to) { outputText.value = text; outCount.textContent = text.length; return; }
+
+  translateBtn.disabled = true;
+  translateBtn.textContent = 'Translate ho raha hai...';
+  statusEl.textContent = '';
+  outputText.value = '';
+
+  try {
+    const chunks = text.match(/[\s\S]{1,480}/g) || [text];
+    let result = '';
+    for (const chunk of chunks) {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=${from}|${to}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data && data.responseData && data.responseData.translatedText) {
+        result += data.responseData.translatedText + ' ';
+      } else {
+        throw new Error('no translation');
+      }
+    }
+    outputText.value = result.trim();
+    outCount.textContent = outputText.value.length;
+    statusEl.textContent = 'Translate ho gaya';
+  } catch (err) {
+    statusEl.textContent = 'Translation nahi ho paaya, dobara try karo';
+  } finally {
+    translateBtn.disabled = false;
+    translateBtn.textContent = 'Translate karo';
+  }
+}
+
+translateBtn.addEventListener('click', translate);
+
+resetBtn.addEventListener('click', () => {
+  inputText.value = '';
+  outputText.value = '';
+  charCount.textContent = '0';
+  outCount.textContent = '';
+  statusEl.textContent = '';
+});
+clearBtn.addEventListener('click', () => {
+  inputText.value = '';
+  charCount.textContent = '0';
+  inputText.focus();
+});
+
+copyBtn.addEventListener('click', () => {
+  if (!outputText.value) return;
+  navigator.clipboard.writeText(outputText.value).then(() => {
+    copyBtn.classList.add('copied');
+    setTimeout(() => copyBtn.classList.remove('copied'), 1200);
+  });
+});
+
+swapBtn.addEventListener('click', () => {
+  swapBtn.classList.add('spin');
+  setTimeout(() => swapBtn.classList.remove('spin'), 250);
+  const s = srcLang.value, t = tgtLang.value;
+  srcLang.value = t; tgtLang.value = s;
+  const inV = inputText.value, outV = outputText.value;
+  inputText.value = outV;
+  outputText.value = inV;
+  charCount.textContent = inputText.value.length;
+  outCount.textContent = outputText.value.length;
+});
+
+function speak(text, langCode) {
+  if (!text) return;
+  if (!('speechSynthesis' in window)) { statusEl.textContent = 'Is browser mein awaaz support nahi hai'; return; }
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = langCode;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+speakInBtn.addEventListener('click', () => speak(inputText.value, srcLang.value));
+speakOutBtn.addEventListener('click', () => speak(outputText.value, tgtLang.value));
+
+micBtn.addEventListener('click', () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { statusEl.textContent = 'Is browser mein mic input support nahi hai'; return; }
+  const rec = new SR();
+  rec.lang = srcLang.value;
+  rec.onresult = e => {
+    inputText.value = e.results[0][0].transcript;
+    charCount.textContent = inputText.value.length;
+  };
+  rec.onerror = () => { statusEl.textContent = 'Mic se suna nahi gaya'; };
+  micBtn.textContent = '...';
+  rec.onend = () => { micBtn.textContent = '🎤'; };
+  rec.start();
+});
+
+const PHRASES = [
+  ['Good morning', 'सुप्रभात'],
+  ['How are you?', 'आप कैसे हैं?'],
+  ['Thank you', 'धन्यवाद'],
+  ['What is your name?', 'आपका नाम क्या है?'],
+  ['I love you', 'मैं तुमसे प्यार करता हूँ'],
+  ['See you later', 'फिर मिलेंगे']
+];
+PHRASES.forEach(([en, hi]) => {
+  const card = document.createElement('div');
+  card.className = 'phrase-card';
+  card.innerHTML = `<div class="en">${en}</div><div class="native">${hi}</div>`;
+  card.addEventListener('click', () => {
+    srcLang.value = 'en'; tgtLang.value = 'hi';
+    inputText.value = en;
+    outputText.value = hi;
+    charCount.textContent = en.length;
+    outCount.textContent = hi.length;
+  });
+  phraseGrid.appendChild(card);
+});
+</script>
+</body>
+</html>
